@@ -27,16 +27,17 @@ enum TaskPriority {
 }
 
 model UserProfile {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  keycloakUserId String    @unique
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  keycloakUserId String     @unique
   name           String
-  email          String    @unique
-  roleSnapshot   UserRole  @default(USER)
-  isActiveLocal  Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  email          String     @unique
+  roleSnapshot   UserRole   @default(USER)
+  isActiveLocal  Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
   sessions       Session[]
   tasks          Task[]
+  categories     Category[] // Added: A user can own multiple categories
 
   @@map("user_profiles")
 }
@@ -56,6 +57,22 @@ model Session {
   @@map("sessions")
 }
 
+model Category {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String
+  ownerId   String    @db.Uuid
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  owner UserProfile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks Task[] // Added: One-to-many relationship with Task
+
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@map("categories")
+}
+
 model Task {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title       String
@@ -64,12 +81,15 @@ model Task {
   priority    TaskPriority @default(MEDIUM)
   dueDate     DateTime?
   ownerId     String       @db.Uuid
+  categoryId  String?      @db.Uuid // Added: Foreign key for Category
   deletedAt   DateTime?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   owner       UserProfile  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  category    Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Added: Relation to Category
 
   @@index([ownerId])
+  @@index([categoryId]) // Added: Index for categoryId
   @@index([deletedAt])
   @@index([status])
   @@map("tasks")

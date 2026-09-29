@@ -9,16 +9,21 @@ import type {
   AuthControllerCallbackParams,
   AuthControllerLoginParams,
   AuthMeResponseDto,
+  CategoryControllerFindAllParams,
+  CategoryDto,
+  CreateCategoryDto,
   CreateTaskDto,
   CreateUserDto,
   LoginRequestDto,
   ManagedUserDto,
+  PaginatedResponseDto,
   PaginatedTasksResponseDto,
   PaginatedUsersResponseDto,
   ProblemDetailsDto,
   SetUserStatusDto,
   TaskDto,
   TasksControllerFindAllParams,
+  UpdateCategoryDto,
   UpdateSelfUserDto,
   UpdateTaskDto,
   UpdateUserDto,
@@ -146,8 +151,16 @@ export const authControllerDirectLogin = async (loginRequestDto: LoginRequestDto
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<authControllerDirectLoginResponse>(getAuthControllerDirectLoginUrl(),
   {
@@ -562,8 +575,16 @@ export const userControllerCreate = async (createUserDto: CreateUserDto, options
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<userControllerCreateResponse>(getUserControllerCreateUrl(),
   {
@@ -616,8 +637,16 @@ export const userControllerUpdateMe = async (updateSelfUserDto: UpdateSelfUserDt
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<userControllerUpdateMeResponse>(getUserControllerUpdateMeUrl(),
   {
@@ -734,8 +763,16 @@ export const userControllerUpdate = async (id: string,
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<userControllerUpdateResponse>(getUserControllerUpdateUrl(id),
   {
@@ -799,8 +836,16 @@ export const userControllerSetStatus = async (id: string,
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<userControllerSetStatusResponse>(getUserControllerSetStatusUrl(id),
   {
@@ -854,8 +899,16 @@ export const tasksControllerCreate = async (createTaskDto: CreateTaskDto, option
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<tasksControllerCreateResponse>(getTasksControllerCreateUrl(),
   {
@@ -1025,8 +1078,16 @@ export const tasksControllerUpdate = async (id: string,
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return customFetch<tasksControllerUpdateResponse>(getTasksControllerUpdateUrl(id),
   {
@@ -1083,6 +1144,222 @@ export const getTasksControllerRemoveUrl = (id: string,) => {
 export const tasksControllerRemove = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<tasksControllerRemoveResponse> => {
 
   return customFetch<tasksControllerRemoveResponse>(getTasksControllerRemoveUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type categoryControllerCreateResponse201 = {
+  data: CategoryDto
+  status: 201
+}
+
+export type categoryControllerCreateResponseSuccess = (categoryControllerCreateResponse201) & {
+  headers: Headers;
+};
+;
+
+export type categoryControllerCreateResponse = (categoryControllerCreateResponseSuccess)
+
+export const getCategoryControllerCreateUrl = () => {
+
+
+
+
+  return `/api/v1/categories`
+}
+
+/**
+ * @summary Create a new category
+ */
+export const categoryControllerCreate = async (createCategoryDto: CreateCategoryDto, options?: Parameters<typeof customFetch>[1]): Promise<categoryControllerCreateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<categoryControllerCreateResponse>(getCategoryControllerCreateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createCategoryDto)
+  }
+);}
+
+
+
+export type categoryControllerFindAllResponse200 = {
+  data: PaginatedResponseDto
+  status: 200
+}
+
+export type categoryControllerFindAllResponseSuccess = (categoryControllerFindAllResponse200) & {
+  headers: Headers;
+};
+;
+
+export type categoryControllerFindAllResponse = (categoryControllerFindAllResponseSuccess)
+
+export const getCategoryControllerFindAllUrl = (params?: CategoryControllerFindAllParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/categories?${stringifiedParams}` : `/api/v1/categories`
+}
+
+/**
+ * @summary Retrieve a list of categories for the current user
+ */
+export const categoryControllerFindAll = async (params?: CategoryControllerFindAllParams, options?: Parameters<typeof customFetch>[1]): Promise<categoryControllerFindAllResponse> => {
+
+  return customFetch<categoryControllerFindAllResponse>(getCategoryControllerFindAllUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type categoryControllerFindOneResponse200 = {
+  data: CategoryDto
+  status: 200
+}
+
+export type categoryControllerFindOneResponseSuccess = (categoryControllerFindOneResponse200) & {
+  headers: Headers;
+};
+;
+
+export type categoryControllerFindOneResponse = (categoryControllerFindOneResponseSuccess)
+
+export const getCategoryControllerFindOneUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/categories/${id}`
+}
+
+/**
+ * @summary Retrieve a single category by ID
+ */
+export const categoryControllerFindOne = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<categoryControllerFindOneResponse> => {
+
+  return customFetch<categoryControllerFindOneResponse>(getCategoryControllerFindOneUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type categoryControllerUpdateResponse200 = {
+  data: CategoryDto
+  status: 200
+}
+
+export type categoryControllerUpdateResponseSuccess = (categoryControllerUpdateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type categoryControllerUpdateResponse = (categoryControllerUpdateResponseSuccess)
+
+export const getCategoryControllerUpdateUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/categories/${id}`
+}
+
+/**
+ * @summary Update an existing category
+ */
+export const categoryControllerUpdate = async (id: string,
+    updateCategoryDto: UpdateCategoryDto, options?: Parameters<typeof customFetch>[1]): Promise<categoryControllerUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<categoryControllerUpdateResponse>(getCategoryControllerUpdateUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateCategoryDto)
+  }
+);}
+
+
+
+export type categoryControllerRemoveResponse204 = {
+  data: void
+  status: 204
+}
+
+export type categoryControllerRemoveResponseSuccess = (categoryControllerRemoveResponse204) & {
+  headers: Headers;
+};
+;
+
+export type categoryControllerRemoveResponse = (categoryControllerRemoveResponseSuccess)
+
+export const getCategoryControllerRemoveUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/categories/${id}`
+}
+
+/**
+ * @summary Soft delete a category by ID
+ */
+export const categoryControllerRemove = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<categoryControllerRemoveResponse> => {
+
+  return customFetch<categoryControllerRemoveResponse>(getCategoryControllerRemoveUrl(id),
   {
     ...options,
     method: 'DELETE'

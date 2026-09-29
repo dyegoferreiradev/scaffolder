@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UserControllerListParams = {
+export type CategoryControllerFindAllParams = {
 /**
  * Page number
  */
@@ -19,4 +19,8 @@ pageSize?: number;
  * Search term for filtering
  */
 search?: string;
+/**
+ * Filter categories by title (case-insensitive partial match)
+ */
+title?: string;
 };

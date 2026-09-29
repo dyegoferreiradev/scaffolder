@@ -1,46 +1,18 @@
-import React from 'react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import * as React from "react"
+import { cn } from "cn"
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  error?: string;
-  label?: string;
-  helperText?: string;
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = 'text', error, label, helperText, id, ...props }, ref) => {
-    const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
-
-    return (
-      <div className="w-full flex flex-col gap-1.5">
-        {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {label}
-          </label>
-        )}
-        <input
-          id={inputId}
-          type={type}
-          ref={ref}
-          className={twMerge(
-            clsx(
-              'flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
-              error
-                ? 'border-red-500 focus-visible:ring-red-500'
-                : 'border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500',
-              className,
-            ),
-          )}
-          {...props}
-        />
-        {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
-        {!error && helperText && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">{helperText}</span>
-        )}
-      </div>
-    );
-  },
-);
-
-Input.displayName = 'Input';
+export { Input }

@@ -5,12 +5,12 @@
  * API REST do AppStart - Especificação OpenAPI 3.0
  * OpenAPI spec version: 1.0.0
  */
-import type { ManagedUserDto } from './managedUserDto';
+import type { PaginatedResponseDtoDataItem } from './paginatedResponseDtoDataItem';
 import type { PaginationMetaDto } from './paginationMetaDto';
 
-export interface PaginatedUsersResponseDto {
+export interface PaginatedResponseDto {
   /** Array of items */
-  data: ManagedUserDto[];
+  data: PaginatedResponseDtoDataItem[];
   /** Pagination metadata */
   meta: PaginationMetaDto;
 }

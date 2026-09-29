@@ -12,19 +12,15 @@ import type { TasksControllerFindAllStatus } from './tasksControllerFindAllStatu
 
 export type TasksControllerFindAllParams = {
 /**
- * Número da página
- * @minimum 1
+ * Page number
  */
 page?: number;
 /**
- * Itens por página
- * @minimum 1
- * @maximum 100
+ * Number of items per page
  */
 pageSize?: number;
 /**
- * Termo de busca
- * @maxLength 120
+ * Search term for filtering
  */
 search?: string;
 /**

@@ -338,9 +338,8 @@
             "name": "page",
             "required": false,
             "in": "query",
-            "description": "Número da página",
+            "description": "Page number",
             "schema": {
-              "minimum": 1,
               "default": 1,
               "type": "number"
             }
@@ -349,10 +348,8 @@
             "name": "pageSize",
             "required": false,
             "in": "query",
-            "description": "Itens por página",
+            "description": "Number of items per page",
             "schema": {
-              "minimum": 1,
-              "maximum": 100,
               "default": 20,
               "type": "number"
             }
@@ -361,9 +358,8 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Termo de busca",
+            "description": "Search term for filtering",
             "schema": {
-              "maxLength": 120,
               "type": "string"
             }
           }
@@ -844,9 +840,8 @@
             "name": "page",
             "required": false,
             "in": "query",
-            "description": "Número da página",
+            "description": "Page number",
             "schema": {
-              "minimum": 1,
               "default": 1,
               "type": "number"
             }
@@ -855,10 +850,8 @@
             "name": "pageSize",
             "required": false,
             "in": "query",
-            "description": "Itens por página",
+            "description": "Number of items per page",
             "schema": {
-              "minimum": 1,
-              "maximum": 100,
               "default": 20,
               "type": "number"
             }
@@ -867,9 +860,8 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Termo de busca",
+            "description": "Search term for filtering",
             "schema": {
-              "maxLength": 120,
               "type": "string"
             }
           },
@@ -1177,6 +1169,215 @@
           "tasks"
         ]
       }
+    },
+    "/api/v1/categories": {
+      "post": {
+        "operationId": "CategoryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The category has been successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new category",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "get": {
+        "operationId": "CategoryController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term for filtering",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter categories by title (case-insensitive partial match)",
+            "schema": {
+              "example": "work",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve a list of categories for the current user",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "get": {
+        "operationId": "CategoryController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The category details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve a single category by ID",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "patch": {
+        "operationId": "CategoryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The category has been successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an existing category",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "delete": {
+        "operationId": "CategoryController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The category has been successfully soft-deleted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Soft delete a category by ID",
+        "tags": [
+          "Categories"
+        ]
+      }
     }
   },
   "info": {
@@ -1395,13 +1596,19 @@
         "type": "object",
         "properties": {
           "data": {
+            "description": "Array of items",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ManagedUserDto"
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/PaginationMetaDto"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
+              }
+            ]
           }
         },
         "required": [
@@ -1689,6 +1896,102 @@
           "dueDate": {
             "type": "string",
             "description": "Data de entrega limite (ISO 8601)"
+          }
+        }
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the category",
+            "example": "Work",
+            "minLength": 3,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "CategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the category",
+            "example": "clx0x0x0x0x0x0x0x0x0x0x0"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the category",
+            "example": "Work"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "The ID of the user who owns this category",
+            "example": "clx0x0x0x0x0x0x0x0x0x0x0"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the category was created",
+            "example": "2023-10-27T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the category was last updated",
+            "example": "2023-10-27T11:00:00.000Z"
+          },
+          "deletedAt": {
+            "type": "object",
+            "description": "Timestamp when the category was soft-deleted",
+            "example": "2023-10-27T12:00:00.000Z",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "ownerId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Array of items",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "meta": {
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the category",
+            "example": "Work",
+            "minLength": 3,
+            "maxLength": 50
           }
         }
       }
