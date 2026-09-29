@@ -19,7 +19,7 @@ flowchart TD
     end
 
     subgraph Infraestrutura["Infraestrutura de Dados & Identidade"]
-        PG[("PostgreSQL\n(Perfis, Sessões, Tasks)")]
+        PG[("PostgreSQL\n(Perfis, Sessões, Categories, Tasks)")]
         KC["Keycloak IdP\n(Realm AppStart / OIDC)"]
     end
 
@@ -62,6 +62,8 @@ sequenceDiagram
 erDiagram
     UserProfile ||--o{ Session : "possui"
     UserProfile ||--o{ Task : "é proprietário de"
+    UserProfile ||--o{ Category : "é proprietário de"
+    Category ||--o{ Task : "classifica"
 
     UserProfile {
         uuid id PK
@@ -84,6 +86,15 @@ erDiagram
         datetime createdAt
     }
 
+    Category {
+        uuid id PK
+        string title
+        uuid ownerId FK
+        datetime deletedAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
     Task {
         uuid id PK
         string title
@@ -92,6 +103,7 @@ erDiagram
         enum priority "LOW | MEDIUM | HIGH | URGENT"
         datetime dueDate
         uuid ownerId FK
+        uuid categoryId FK "opcional"
         datetime deletedAt
         datetime createdAt
         datetime updatedAt
@@ -119,6 +131,11 @@ erDiagram
 | `PATCH` | `/api/v1/users/:id` | Sessão + CSRF | `ADMIN` | Atualiza dados de um usuário |
 | `PATCH` | `/api/v1/users/:id/status` | Sessão + CSRF | `ADMIN` | Ativa ou desativa um usuário |
 | `PATCH` | `/api/v1/users/me` | Sessão + CSRF | `USER` | Autoatendimento de perfil (nome) |
+| `GET` | `/api/v1/categories` | Sessão | `USER` | Lista categorias próprias com paginação |
+| `POST` | `/api/v1/categories` | Sessão + CSRF | `USER` | Cria uma categoria para o usuário autenticado |
+| `GET` | `/api/v1/categories/{id}` | Sessão | `USER` | Consulta uma categoria própria |
+| `PATCH` | `/api/v1/categories/{id}` | Sessão + CSRF | `USER` | Atualiza uma categoria própria |
+| `DELETE` | `/api/v1/categories/{id}` | Sessão + CSRF | `USER` | Remove logicamente uma categoria própria |
 | `GET` | `/api/v1/tasks` | Sessão | `USER` | Lista tarefas com paginação, busca e filtros |
 | `POST` | `/api/v1/tasks` | Sessão + CSRF | `USER` | Cria nova tarefa com ownership |
 | `GET` | `/api/v1/tasks/:id` | Sessão | `USER` | Detalhes da tarefa (owner ou admin) |

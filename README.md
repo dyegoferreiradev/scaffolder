@@ -80,8 +80,24 @@ Browser (React SPA) <--- Cookies HttpOnly ---> NestJS API (BFF) <--- OIDC PKCE -
                                                      |
                                                      v
                                              PostgreSQL (Prisma)
-                                        (Perfis, Sessões, Tasks)
+                                   (Perfis, Sessões, Categories, Tasks)
 ```
+
+## Módulo de Categorias e Integração com Tarefas
+
+O módulo `categories` permite que cada usuário organize suas tarefas com categorias próprias. Ele oferece operações para listar, criar, editar e remover categorias, respeitando a propriedade dos dados e usando remoção lógica.
+
+Na página **Tarefas**, os formulários de criação e edição incluem um seletor opcional de categoria. Uma tarefa pode permanecer sem categoria ou ser vinculada a uma categoria existente. Essa associação é armazenada pelo campo `categoryId`, que referencia `Category` no Prisma; a API também retorna os dados resumidos da categoria junto da tarefa.
+
+Na página **Categorias**, cada categoria mostra a quantidade de tarefas vinculadas e uma prévia de até três títulos. Quando há mais tarefas, o botão **“+N mais”** abre uma modal com a lista completa. Assim, a relação funciona nos dois sentidos: a tarefa pode ser categorizada no formulário, e a categoria permite consultar as tarefas associadas.
+
+Para testar com dados de demonstração em um banco local, faça login ao menos uma vez como administrador e execute:
+
+```bash
+pnpm db:seed
+```
+
+O primeiro login cria o perfil local associado à conta do Keycloak. Depois disso, o seed acrescenta categorias e tarefas de exemplo sem apagar ou duplicar os dados existentes; a categoria **Projetos** fica com cinco tarefas para testar a modal.
 
 ---
 
@@ -89,14 +105,14 @@ Browser (React SPA) <--- Cookies HttpOnly ---> NestJS API (BFF) <--- OIDC PKCE -
 
 | Documento | Descrição |
 | :--- | :--- |
-| [docs/architecture-overview.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/architecture-overview.md) | Visão geral da arquitetura, topologia, diagramas Mermaid e catálogo de rotas |
-| [docs/feature-development-guide.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/feature-development-guide.md) | Guia prático passo a passo para criar novas funcionalidades |
-| [docs/testing-strategy-guide.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/testing-strategy-guide.md) | Pirâmide de testes, comandos, escopos e exemplos |
-| [docs/educator-guide.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/educator-guide.md) | Manual para professores, preparação de turmas e exercícios práticos |
-| [docs/reference-module-guidance.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/reference-module-guidance.md) | Guia do módulo de referência `tasks`, como renomear ou remover |
-| [docs/observability-and-troubleshooting.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/observability-and-troubleshooting.md) | Logs estruturados, correlação `requestId` e health checks |
-| [docs/glossary-and-concepts.md](file:///home/filipe/Documentos/Projetos/scaffolder/docs/glossary-and-concepts.md) | Glossário com explicações didáticas sobre BFF, OIDC, PKCE, CSRF e Soft Delete |
-| [docs/decisions/](file:///home/filipe/Documentos/Projetos/scaffolder/docs/decisions/) | Registros de Decisão de Arquitetura (ADR-001 a ADR-006) |
+| [docs/architecture-overview.md](docs/architecture-overview.md) | Visão geral da arquitetura, topologia, diagramas Mermaid e catálogo de rotas |
+| [docs/feature-development-guide.md](docs/feature-development-guide.md) | Guia prático passo a passo para criar novas funcionalidades |
+| [docs/testing-strategy-guide.md](docs/testing-strategy-guide.md) | Pirâmide de testes, comandos, escopos e exemplos |
+| [docs/educator-guide.md](docs/educator-guide.md) | Manual para professores, preparação de turmas e exercícios práticos |
+| [docs/reference-module-guidance.md](docs/reference-module-guidance.md) | Guia do módulo de referência `tasks`, como renomear ou remover |
+| [docs/observability-and-troubleshooting.md](docs/observability-and-troubleshooting.md) | Logs estruturados, correlação `requestId` e health checks |
+| [docs/glossary-and-concepts.md](docs/glossary-and-concepts.md) | Glossário com explicações didáticas sobre BFF, OIDC, PKCE, CSRF e Soft Delete |
+| [docs/decisions/](docs/decisions/) | Registros de Decisão de Arquitetura (ADR-001 a ADR-006) |
 
 ---
 
