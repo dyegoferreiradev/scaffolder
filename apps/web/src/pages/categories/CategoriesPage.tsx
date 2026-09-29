@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,11 +40,14 @@ import { CategoryFormDialog } from './CategoryFormDialog';
 
 export default function CategoriesPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
   const [createOpen, setCreateOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CategoryDto | null>(null);
 
-  const [queryParams, setQueryParams] = useState<CategoryControllerFindAllParams>({
+  const [queryParams] = useState<CategoryControllerFindAllParams>({
     page: 1,
     pageSize: 20,
   });
@@ -74,6 +78,9 @@ export default function CategoriesPage() {
       await createMutation.mutateAsync(payload);
       await queryClient.invalidateQueries({ queryKey: ['categories'] });
       setCreateOpen(false);
+      if (returnTo) {
+        navigate(returnTo, { replace: true });
+      }
     } catch (error) {
       console.error('Failed to create category:', error);
     }
@@ -111,10 +118,17 @@ export default function CategoriesPage() {
           <h1 className="text-2xl font-semibold">Categorias</h1>
           <p className="text-muted-foreground">Gerencie suas categorias de tarefas</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Categoria
-        </Button>
+        <div className="flex items-center gap-2">
+          {returnTo && (
+            <Button variant="outline" onClick={() => navigate(returnTo, { replace: true })}>
+              Voltar para tarefas
+            </Button>
+          )}
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Categoria
+          </Button>
+        </div>
       </div>
 
       <CategoryFormDialog

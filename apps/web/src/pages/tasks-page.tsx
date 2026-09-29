@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import {
   Search,
   Trash2,
   X,
+  Folder
 } from 'lucide-react';
 import { useAuth } from '../context/auth-context';
 import { Badge } from '../components/ui/badge';
@@ -29,12 +30,11 @@ import {
   tasksControllerFindAll,
   tasksControllerRemove,
   tasksControllerUpdate,
+  categoryControllerFindAll
 } from '../lib/api-client';
 import type {
   PaginatedTasksResponseDto,
   TaskDto,
-  TaskDtoPriority,
-  TaskDtoStatus,
 } from '../lib/api-client/models';
 
 const taskFormSchema = z.object({
@@ -45,6 +45,7 @@ const taskFormSchema = z.object({
   description: z.string().max(1000, 'Máximo de 1000 caracteres.').optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
   dueDate: z.string().optional(),
+  categoryId: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -58,6 +59,7 @@ type EditTaskFormValues = z.infer<typeof editTaskFormSchema>;
 export function TasksPage() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const page = Number(searchParams.get('page')) || 1;
@@ -71,7 +73,6 @@ export function TasksPage() {
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Update URL Search Params helper
   const updateParams = (newParams: Record<string, string | number | undefined>) => {
     const updated = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(newParams)) {
@@ -84,7 +85,7 @@ export function TasksPage() {
     setSearchParams(updated);
   };
 
-  // Fetch Tasks with TanStack Query
+  // Busca de Tarefas
   const { data: response, isLoading, isError, refetch } = useQuery({
     queryKey: ['tasks', { page, search, statusFilter, priorityFilter, sortBy, sortOrder }],
     queryFn: async () => {
@@ -101,6 +102,21 @@ export function TasksPage() {
     },
   });
 
+  // Busca de Categorias para o Select
+  const { data: categoriesResponse } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await categoryControllerFindAll();
+      return (res as any)?.data ?? res;
+    },
+  });
+
+  const categories = Array.isArray((categoriesResponse as any)?.data)
+    ? (categoriesResponse as any).data
+    : Array.isArray(categoriesResponse)
+      ? categoriesResponse
+      : [];
+
   const paginatedData = response && 'data' in (response as PaginatedTasksResponseDto)
     ? (response as PaginatedTasksResponseDto)
     : null;
@@ -108,7 +124,6 @@ export function TasksPage() {
   const tasks: TaskDto[] = paginatedData?.data || [];
   const meta = paginatedData?.meta || { page: 1, pageSize: 8, total: 0, totalPages: 1 };
 
-  // Form for Creating
   const {
     register: registerCreate,
     handleSubmit: handleSubmitCreate,
@@ -121,6 +136,7 @@ export function TasksPage() {
       description: '',
       priority: 'MEDIUM',
       dueDate: '',
+      categoryId: '',
     },
   });
 
@@ -131,7 +147,8 @@ export function TasksPage() {
         description: data.description || undefined,
         priority: data.priority as any,
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-      });
+        categoryId: data.categoryId || undefined,
+      } as any);
       return res.data;
     },
     onSuccess: (data) => {
@@ -153,22 +170,9 @@ export function TasksPage() {
     },
   });
 
-  // Edit / Status Update Mutation
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: {
-        title?: string;
-        description?: string;
-        priority?: TaskDtoPriority;
-        status?: TaskDtoStatus;
-        dueDate?: string;
-      };
-    }) => {
-      const res = await tasksControllerUpdate(id, data as any);
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await tasksControllerUpdate(id, data);
       return res.data;
     },
     onSuccess: () => {
@@ -185,7 +189,6 @@ export function TasksPage() {
     },
   });
 
-  // Delete Mutation (Soft Delete)
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await tasksControllerRemove(id);
@@ -205,35 +208,24 @@ export function TasksPage() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'URGENT':
-        return <Badge variant="destructive">Urgente</Badge>;
-      case 'HIGH':
-        return <Badge variant="warning">Alta</Badge>;
-      case 'MEDIUM':
-        return <Badge variant="default">Média</Badge>;
-      case 'LOW':
-      default:
-        return <Badge variant="secondary">Baixa</Badge>;
+      case 'URGENT': return <Badge variant="destructive">Urgente</Badge>;
+      case 'HIGH': return <Badge variant="warning">Alta</Badge>;
+      case 'MEDIUM': return <Badge variant="default">Média</Badge>;
+      case 'LOW': default: return <Badge variant="secondary">Baixa</Badge>;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED':
-        return <Badge variant="success">Concluída</Badge>;
-      case 'IN_PROGRESS':
-        return <Badge variant="default">Em Andamento</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="destructive">Cancelada</Badge>;
-      case 'PENDING':
-      default:
-        return <Badge variant="outline">Pendente</Badge>;
+      case 'COMPLETED': return <Badge variant="success">Concluída</Badge>;
+      case 'IN_PROGRESS': return <Badge variant="default">Em Andamento</Badge>;
+      case 'CANCELLED': return <Badge variant="destructive">Cancelada</Badge>;
+      case 'PENDING': default: return <Badge variant="outline">Pendente</Badge>;
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header and Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
@@ -252,18 +244,12 @@ export function TasksPage() {
       </div>
 
       {feedback && (
-        <ActionFeedback
-          type={feedback.type}
-          message={feedback.message}
-          onClose={() => setFeedback(null)}
-        />
+        <ActionFeedback type={feedback.type} message={feedback.message} onClose={() => setFeedback(null)} />
       )}
 
-      {/* Filter and Search Controls */}
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
@@ -275,7 +261,6 @@ export function TasksPage() {
               />
             </div>
 
-            {/* Status Filter */}
             <select
               value={statusFilter}
               onChange={(e) => updateParams({ status: e.target.value || undefined, page: 1 })}
@@ -288,7 +273,6 @@ export function TasksPage() {
               <option value="CANCELLED">Cancelada</option>
             </select>
 
-            {/* Priority Filter */}
             <select
               value={priorityFilter}
               onChange={(e) => updateParams({ priority: e.target.value || undefined, page: 1 })}
@@ -301,7 +285,6 @@ export function TasksPage() {
               <option value="URGENT">Urgente</option>
             </select>
 
-            {/* Sorting */}
             <select
               value={`${sortBy}:${sortOrder}`}
               onChange={(e) => {
@@ -319,15 +302,10 @@ export function TasksPage() {
         </CardContent>
       </Card>
 
-      {/* Task List / State Views */}
       {isLoading ? (
         <LoadingState message="Carregando tarefas..." />
       ) : isError ? (
-        <ErrorState
-          title="Erro ao buscar tarefas"
-          message="Não foi possível carregar as tarefas no momento."
-          onRetry={() => refetch()}
-        />
+        <ErrorState title="Erro ao buscar tarefas" message="Não foi possível carregar as tarefas no momento." onRetry={() => refetch()} />
       ) : tasks.length === 0 ? (
         <EmptyState
           title="Nenhuma tarefa encontrada"
@@ -338,11 +316,7 @@ export function TasksPage() {
           }
           action={
             search || statusFilter || priorityFilter ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchParams(new URLSearchParams())}
-              >
+              <Button variant="outline" size="sm" onClick={() => setSearchParams(new URLSearchParams())}>
                 Limpar todos os filtros
               </Button>
             ) : (
@@ -358,12 +332,10 @@ export function TasksPage() {
             {tasks.map((task) => {
               const desc = typeof task.description === 'string' ? task.description : '';
               const dueStr = typeof task.dueDate === 'string' ? task.dueDate : '';
+              const categoryTitle = (task as any).category?.title; // Proteção para evitar erros de tipagem
 
               return (
-                <Card
-                  key={task.id}
-                  className="overflow-hidden hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm"
-                >
+                <Card key={task.id} className="overflow-hidden hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm">
                   <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -373,14 +345,16 @@ export function TasksPage() {
                         <div className="flex items-center gap-1.5 shrink-0">
                           {getPriorityBadge(task.priority)}
                           {getStatusBadge(task.status)}
+                          {categoryTitle && (
+                            <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-300 flex gap-1">
+                              <Folder className="h-3 w-3" />
+                              {categoryTitle}
+                            </Badge>
+                          )}
                         </div>
                       </div>
 
-                      {desc && (
-                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
-                          {desc}
-                        </p>
-                      )}
+                      {desc && <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">{desc}</p>}
                     </div>
 
                     <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
@@ -392,68 +366,32 @@ export function TasksPage() {
                           </div>
                         )}
                         {isAdmin && task.owner && (
-                          <span className="text-[11px] text-slate-400">
-                            Por: {task.owner.name}
-                          </span>
+                          <span className="text-[11px] text-slate-400">Por: {task.owner.name}</span>
                         )}
                       </div>
 
-                      {/* Action buttons */}
                       <div className="flex items-center gap-1.5">
                         {task.status !== 'COMPLETED' ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
-                            title="Marcar como Concluída"
-                            isLoading={updateMutation.isPending && updateMutation.variables?.id === task.id}
-                            onClick={() =>
-                              updateMutation.mutate({
-                                id: task.id,
-                                data: { status: 'COMPLETED' as any },
-                              })
-                            }
+                          <Button size="sm" variant="ghost" className="h-8 px-2 text-green-600" isLoading={updateMutation.isPending && updateMutation.variables?.id === task.id}
+                            onClick={() => updateMutation.mutate({ id: task.id, data: { status: 'COMPLETED' } })}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             <span className="text-xs font-semibold">Concluir</span>
                           </Button>
                         ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                            title="Reabrir Tarefa"
-                            isLoading={updateMutation.isPending && updateMutation.variables?.id === task.id}
-                            onClick={() =>
-                              updateMutation.mutate({
-                                id: task.id,
-                                data: { status: 'PENDING' as any },
-                              })
-                            }
+                          <Button size="sm" variant="ghost" className="h-8 px-2 text-amber-600" isLoading={updateMutation.isPending && updateMutation.variables?.id === task.id}
+                            onClick={() => updateMutation.mutate({ id: task.id, data: { status: 'PENDING' } })}
                           >
                             <RotateCcw className="h-3.5 w-3.5 mr-1" />
                             <span className="text-xs">Reabrir</span>
                           </Button>
                         )}
-
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          title="Editar Tarefa"
-                          onClick={() => setEditingTask(task)}
-                        >
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditingTask(task)}>
                           <Edit2 className="h-3.5 w-3.5 text-slate-500" />
                         </Button>
-
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                          title="Excluir Tarefa (Remoção Lógica)"
-                          isLoading={deleteMutation.isPending && deleteMutation.variables === task.id}
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500" isLoading={deleteMutation.isPending && deleteMutation.variables === task.id}
                           onClick={() => {
-                            if (confirm(`Deseja realmente remover a tarefa "${task.title}"?`)) {
+                            if (confirm(`Deseja remover a tarefa "${task.title}"?`)) {
                               deleteMutation.mutate(task.id);
                             }
                           }}
@@ -468,31 +406,14 @@ export function TasksPage() {
             })}
           </div>
 
-          {/* Pagination */}
           <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-500">
-            <div>
-              Mostrando <strong>{tasks.length}</strong> de <strong>{meta.total}</strong> tarefas
-            </div>
+            <div>Mostrando <strong>{tasks.length}</strong> de <strong>{meta.total}</strong> tarefas</div>
             <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-2"
-                disabled={meta.page <= 1}
-                onClick={() => updateParams({ page: Math.max(1, meta.page - 1) })}
-              >
+              <Button variant="outline" size="sm" className="h-8 px-2" disabled={meta.page <= 1} onClick={() => updateParams({ page: Math.max(1, meta.page - 1) })}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="px-2 font-medium">
-                {meta.page} de {meta.totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-2"
-                disabled={meta.page >= meta.totalPages}
-                onClick={() => updateParams({ page: meta.page + 1 })}
-              >
+              <span className="px-2 font-medium">{meta.page} de {meta.totalPages}</span>
+              <Button variant="outline" size="sm" className="h-8 px-2" disabled={meta.page >= meta.totalPages} onClick={() => updateParams({ page: meta.page + 1 })}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -500,131 +421,80 @@ export function TasksPage() {
         </div>
       )}
 
-      {/* Create Modal */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => setIsCreateOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-            >
+            <button onClick={() => setIsCreateOpen(false)} className="absolute top-4 right-4 text-slate-400">
               <X className="h-5 w-5" />
             </button>
 
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
-              Nova Tarefa de Referência
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Crie uma tarefa demonstrando regras de negócio e validação por formulário.
-            </p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Nova Tarefa</h3>
+            <p className="text-xs text-slate-500 mb-4">Crie uma tarefa com uma categoria associada.</p>
 
-            <form
-              onSubmit={handleSubmitCreate((data) => {
-                setFeedback(null);
-                createMutation.mutate(data);
-              })}
-              className="space-y-4"
-            >
-              <Input
-                label="Título"
-                placeholder="Ex.: Desenvolver novo componente"
-                {...registerCreate('title')}
-                error={createErrors.title?.message}
-              />
+            <form onSubmit={handleSubmitCreate((data) => { setFeedback(null); createMutation.mutate(data); })} className="space-y-4">
+              <Input label="Título" placeholder="Ex.: Desenvolver novo componente" {...registerCreate('title')} error={createErrors.title?.message} />
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Descrição
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Detalhes opcionais sobre a atividade..."
-                  {...registerCreate('description')}
-                  className="flex w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                />
-                {createErrors.description?.message && (
-                  <span className="text-xs text-red-500">{createErrors.description.message}</span>
-                )}
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
+                <textarea rows={3} {...registerCreate('description')} className="flex w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Prioridade
-                  </label>
-                  <select
-                    {...registerCreate('priority')}
-                    className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  >
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Prioridade</label>
+                  <select {...registerCreate('priority')} className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500">
                     <option value="LOW">Baixa</option>
                     <option value="MEDIUM">Média</option>
                     <option value="HIGH">Alta</option>
                     <option value="URGENT">Urgente</option>
                   </select>
                 </div>
-
-                <Input
-                  label="Data Limite"
-                  type="date"
-                  {...registerCreate('dueDate')}
-                  error={createErrors.dueDate?.message}
-                />
+                
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Categoria</label>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/categories', { state: { returnTo: '/tasks' } })}
+                      className="text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Nova categoria
+                    </button>
+                  </div>
+                  <select {...registerCreate('categoryId')} className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500">
+                    <option value="">Sem categoria</option>
+                    {categories.map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>{cat.title}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
+              <Input label="Data Limite" type="date" {...registerCreate('dueDate')} error={createErrors.dueDate?.message} />
+
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsCreateOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" size="sm" isLoading={createMutation.isPending}>
-                  Criar Tarefa
-                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+                <Button type="submit" size="sm" isLoading={createMutation.isPending}>Criar Tarefa</Button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
       {editingTask && (
-        <EditTaskModal
-          task={editingTask}
-          onClose={() => setEditingTask(null)}
-          onSubmit={(data) => {
-            setFeedback(null);
-            updateMutation.mutate({ id: editingTask.id, data });
-          }}
-          isLoading={updateMutation.isPending}
-        />
+        <EditTaskModal task={editingTask} categories={categories} onClose={() => setEditingTask(null)} onSubmit={(data) => { setFeedback(null); updateMutation.mutate({ id: editingTask.id, data }); }} isLoading={updateMutation.isPending} />
       )}
     </div>
   );
 }
 
-function EditTaskModal({
-  task,
-  onClose,
-  onSubmit,
-  isLoading,
-}: {
-  task: TaskDto;
-  onClose: () => void;
-  onSubmit: (data: EditTaskFormValues) => void;
-  isLoading: boolean;
-}) {
+function EditTaskModal({ task, categories, onClose, onSubmit, isLoading }: { task: TaskDto; categories: any[]; onClose: () => void; onSubmit: (data: EditTaskFormValues) => void; isLoading: boolean; }) {
+  const navigate = useNavigate();
   const isCompleted = task.status === 'COMPLETED';
   const rawDesc = typeof task.description === 'string' ? task.description : '';
   const rawDue = typeof task.dueDate === 'string' ? (task.dueDate as unknown as string).split('T')[0] : '';
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<EditTaskFormValues>({
+  
+  const { register, handleSubmit, formState: { errors } } = useForm<EditTaskFormValues>({
     resolver: zodResolver(editTaskFormSchema),
     defaultValues: {
       title: task.title,
@@ -632,91 +502,55 @@ function EditTaskModal({
       priority: task.priority as any,
       status: task.status as any,
       dueDate: rawDue,
+      categoryId: (task as any).categoryId || '',
     },
   });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl max-w-md w-full p-6 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400">
           <X className="h-5 w-5" />
         </button>
 
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
-          Editar Tarefa
-        </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          Atualize os campos ou status da tarefa.
-        </p>
-
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Editar Tarefa</h3>
         {isCompleted && (
-          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-lg flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>
-              <strong>Regra de Negócio:</strong> Tarefas concluídas não podem ter detalhes alterados. Para editar, reabra a tarefa alterando o status para "Pendente" ou "Em Andamento".
-            </span>
+          <div className="mb-4 p-3 bg-amber-50 text-amber-800 rounded-lg text-xs flex gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>Regra de Negócio: Tarefas concluídas não podem ser alteradas.</span>
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit((data) => {
-            onSubmit({
-              title: data.title,
-              description: data.description || undefined,
-              priority: data.priority,
-              status: data.status,
-              dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-            });
-          })}
-          className="space-y-4"
-        >
-          <Input
-            label="Título"
-            disabled={isCompleted}
-            {...register('title')}
-            error={errors.title?.message}
-          />
-
+        <form onSubmit={handleSubmit((data) => {
+          onSubmit({
+            title: data.title,
+            description: data.description || undefined,
+            priority: data.priority,
+            status: data.status,
+            categoryId: data.categoryId || undefined,
+            dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+          } as any);
+        })} className="space-y-4">
+          <Input label="Título" disabled={isCompleted} {...register('title')} error={errors.title?.message} />
+          
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Descrição
-            </label>
-            <textarea
-              rows={3}
-              disabled={isCompleted}
-              {...register('description')}
-              className="flex w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
+            <textarea rows={3} disabled={isCompleted} {...register('description')} className="flex w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Status
-              </label>
-              <select
-                {...register('status')}
-                className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
+              <select {...register('status')} className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500">
                 <option value="PENDING">Pendente</option>
                 <option value="IN_PROGRESS">Em Andamento</option>
                 <option value="COMPLETED">Concluída</option>
                 <option value="CANCELLED">Cancelada</option>
               </select>
             </div>
-
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Prioridade
-              </label>
-              <select
-                disabled={isCompleted}
-                {...register('priority')}
-                className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Prioridade</label>
+              <select disabled={isCompleted} {...register('priority')} className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">
                 <option value="LOW">Baixa</option>
                 <option value="MEDIUM">Média</option>
                 <option value="HIGH">Alta</option>
@@ -725,21 +559,31 @@ function EditTaskModal({
             </div>
           </div>
 
-          <Input
-            label="Data Limite"
-            type="date"
-            disabled={isCompleted}
-            {...register('dueDate')}
-            error={errors.dueDate?.message}
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Categoria</label>
+                <button
+                  type="button"
+                  onClick={() => navigate('/categories', { state: { returnTo: '/tasks' } })}
+                  className="text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Nova categoria
+                </button>
+              </div>
+              <select disabled={isCompleted} {...register('categoryId')} className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">
+                <option value="">Sem categoria</option>
+                {categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>{cat.title}</option>
+                ))}
+              </select>
+            </div>
+            <Input label="Data Limite" type="date" disabled={isCompleted} {...register('dueDate')} error={errors.dueDate?.message} />
+          </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" size="sm" isLoading={isLoading}>
-              Salvar Alterações
-            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" size="sm" isLoading={isLoading}>Salvar Alterações</Button>
           </div>
         </form>
       </div>
