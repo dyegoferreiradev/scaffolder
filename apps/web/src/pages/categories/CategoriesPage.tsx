@@ -17,6 +17,13 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-feedback';
 import { Folder, FolderOpen, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   categoryControllerCreate,
   categoryControllerFindAll,
   categoryControllerUpdate,
@@ -40,6 +47,7 @@ export default function CategoriesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CategoryDto | null>(null);
+  const [tasksCategory, setTasksCategory] = useState<CategoryDto | null>(null);
 
   const [queryParams] = useState<CategoryControllerFindAllParams>({
     page: 1,
@@ -229,6 +237,33 @@ export default function CategoriesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <Dialog
+        open={!!tasksCategory}
+        onOpenChange={(open) => {
+          if (!open) setTasksCategory(null);
+        }}
+      >
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Tarefas de {tasksCategory?.title}</DialogTitle>
+            <DialogDescription>
+              {(tasksByCategory[String(tasksCategory?.id)] ?? []).length} tarefas vinculadas.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+            {(tasksByCategory[String(tasksCategory?.id)] ?? []).map((task: any) => (
+              <li
+                key={task.id}
+                className="flex items-start gap-3 rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200"
+              >
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                <span className="break-words">{task.title}</span>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
@@ -333,7 +368,13 @@ export default function CategoriesPage() {
                           ))}
                           {relatedTasks.length > 3 && (
                             <li className="text-[11px] text-slate-500 dark:text-slate-400">
-                              +{relatedTasks.length - 3} mais
+                              <button
+                                type="button"
+                                onClick={() => setTasksCategory(category)}
+                                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                              >
+                                +{relatedTasks.length - 3} mais
+                              </button>
                             </li>
                           )}
                         </ul>
