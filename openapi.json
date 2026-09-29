@@ -1726,6 +1726,11 @@
             "type": "string",
             "description": "Data de entrega limite (ISO 8601)",
             "example": "2026-12-31T23:59:59.000Z"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Identificador da categoria associada",
+            "example": "6d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
           }
         },
         "required": [
@@ -1755,6 +1760,41 @@
           "id",
           "name",
           "email"
+        ]
+      },
+      "TaskCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único da categoria",
+            "example": "6d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          },
+          "title": {
+            "type": "string",
+            "description": "Título da categoria",
+            "example": "Work"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "Identificador do proprietário da categoria",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Data de criação da categoria"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Data de última atualização da categoria"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "ownerId",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "TaskDto": {
@@ -1807,11 +1847,26 @@
             "description": "Identificador do usuário proprietário",
             "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
           },
+          "categoryId": {
+            "type": "object",
+            "description": "Identificador da categoria associada",
+            "nullable": true
+          },
           "owner": {
             "description": "Dados resumidos do proprietário",
             "allOf": [
               {
                 "$ref": "#/components/schemas/TaskOwnerDto"
+              }
+            ]
+          },
+          "category": {
+            "description": "Dados da categoria associada",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskCategoryDto"
               }
             ]
           },
@@ -1896,6 +1951,11 @@
           "dueDate": {
             "type": "string",
             "description": "Data de entrega limite (ISO 8601)"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Identificador da categoria associada",
+            "example": "6d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
           }
         }
       },

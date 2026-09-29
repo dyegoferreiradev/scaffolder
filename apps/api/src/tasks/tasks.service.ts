@@ -42,6 +42,7 @@ export class TasksService {
         priority: (dto.priority as TaskPriorityEnum) || TaskPriorityEnum.MEDIUM,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
         ownerId,
+        categoryId: dto.categoryId || null,
       },
       include: {
         owner: {
@@ -51,6 +52,7 @@ export class TasksService {
             email: true,
           },
         },
+        category: true,
       },
     });
 
@@ -106,6 +108,7 @@ export class TasksService {
               email: true,
             },
           },
+          category: true,
         },
       }),
     ]);
@@ -137,6 +140,7 @@ export class TasksService {
             email: true,
           },
         },
+        category: true,
       },
     });
 
@@ -174,6 +178,7 @@ export class TasksService {
       (dto.title !== undefined && dto.title !== existing.title) ||
       (dto.description !== undefined && dto.description !== existing.description) ||
       (dto.priority !== undefined && dto.priority !== existing.priority) ||
+      (dto.categoryId !== undefined) ||
       (dto.dueDate !== undefined);
 
     if (isAlreadyCompleted && !isReopening && hasFieldChanges) {
@@ -199,6 +204,7 @@ export class TasksService {
         ...(dto.description !== undefined ? { description: dto.description.trim() || null } : {}),
         ...(dto.status !== undefined ? { status: dto.status as TaskStatusEnum } : {}),
         ...(dto.priority !== undefined ? { priority: dto.priority as TaskPriorityEnum } : {}),
+        ...(dto.categoryId !== undefined ? { categoryId: dto.categoryId } : {}),
         ...(dto.dueDate !== undefined ? { dueDate: dto.dueDate ? new Date(dto.dueDate) : null } : {}),
       },
       include: {
@@ -209,6 +215,7 @@ export class TasksService {
             email: true,
           },
         },
+        category: true,
       },
     });
 
@@ -249,6 +256,7 @@ export class TasksService {
       priority: task.priority as TaskPriorityEnum,
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : null,
       ownerId: task.ownerId,
+      categoryId: task.categoryId ?? null,
       owner: task.owner
         ? {
             id: task.owner.id,
@@ -256,6 +264,15 @@ export class TasksService {
             email: task.owner.email,
           }
         : undefined,
+      category: task.category
+        ? {
+            id: task.category.id,
+            title: task.category.title,
+            ownerId: task.category.ownerId,
+            createdAt: new Date(task.category.createdAt).toISOString(),
+            updatedAt: new Date(task.category.updatedAt).toISOString(),
+          }
+        : null,
       createdAt: new Date(task.createdAt).toISOString(),
       updatedAt: new Date(task.updatedAt).toISOString(),
     };

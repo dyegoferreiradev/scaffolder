@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -47,6 +48,11 @@ export class CreateTaskDto {
   @IsOptional()
   @IsDateString({}, { message: 'Data de entrega limite deve ser uma string ISO válida.' })
   dueDate?: string;
+
+  @ApiPropertyOptional({ description: 'Identificador da categoria associada', example: '6d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33' })
+  @IsOptional()
+  @IsUUID('4', { message: 'Categoria inválida.' })
+  categoryId?: string;
 }
 
 export class UpdateTaskDto {
@@ -77,6 +83,11 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsDateString({}, { message: 'Data de entrega limite deve ser uma string ISO válida.' })
   dueDate?: string;
+
+  @ApiPropertyOptional({ description: 'Identificador da categoria associada', example: '6d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33' })
+  @IsOptional()
+  @IsUUID('4', { message: 'Categoria inválida.' })
+  categoryId?: string;
 }
 
 export class TaskOwnerDto {
@@ -88,6 +99,23 @@ export class TaskOwnerDto {
 
   @ApiProperty({ description: 'E-mail do proprietário', example: 'ada@example.com' })
   email!: string;
+}
+
+export class TaskCategoryDto {
+  @ApiProperty({ description: 'Identificador único da categoria', example: '6d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33' })
+  id!: string;
+
+  @ApiProperty({ description: 'Título da categoria', example: 'Work' })
+  title!: string;
+
+  @ApiProperty({ description: 'Identificador do proprietário da categoria', example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' })
+  ownerId!: string;
+
+  @ApiProperty({ description: 'Data de criação da categoria' })
+  createdAt!: string;
+
+  @ApiProperty({ description: 'Data de última atualização da categoria' })
+  updatedAt!: string;
 }
 
 export class TaskDto {
@@ -112,8 +140,14 @@ export class TaskDto {
   @ApiProperty({ description: 'Identificador do usuário proprietário', example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' })
   ownerId!: string;
 
+  @ApiPropertyOptional({ description: 'Identificador da categoria associada', nullable: true })
+  categoryId?: string | null;
+
   @ApiPropertyOptional({ description: 'Dados resumidos do proprietário', type: () => TaskOwnerDto })
   owner?: TaskOwnerDto;
+
+  @ApiPropertyOptional({ description: 'Dados da categoria associada', type: () => TaskCategoryDto, nullable: true })
+  category?: TaskCategoryDto | null;
 
   @ApiProperty({ description: 'Data de criação' })
   createdAt!: string;
